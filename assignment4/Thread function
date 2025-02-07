@@ -1,0 +1,47 @@
+#include "threading.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <pthread.h>
+
+// Thread function to obtain mutex and sleep for specified time
+void* threadfunc(void* thread_param)
+{
+    struct thread_data* thread_func_args = (struct thread_data*) thread_param;
+    
+    // Lock the mutex
+    pthread_mutex_lock(thread_func_args->mutex);
+    
+    // Sleep for specified time
+    usleep(thread_func_args->wait_to_obtain_ms * 1000);
+    
+    // Unlock the mutex
+    pthread_mutex_unlock(thread_func_args->mutex);
+    
+    // Sleep again for specified time
+    usleep(thread_func_args->wait_to_release_ms * 1000);
+    
+    // Mark thread as complete
+    thread_func_args->thread_complete_success = true;
+    
+    return thread_param;
+}
+
+bool start_thread_obtaining_mutex(pthread_t *thread, pthread_mutex_t *mutex, int wait_to_obtain_ms, int wait_to_release_ms)
+{
+    struct thread_data* thread_args = malloc(sizeof(struct thread_data));
+    if (!thread_args) return false;
+    
+    thread_args->mutex = mutex;
+    thread_args->wait_to_obtain_ms = wait_to_obtain_ms;
+    thread_args->wait_to_release_ms = wait_to_release_ms;
+    thread_args->thread_complete_success = false;
+    
+    int result = pthread_create(thread, NULL, threadfunc, thread_args);
+    if (result != 0) {
+        free(thread_args);
+        return false;
+    }
+    
+    return true;
+}
