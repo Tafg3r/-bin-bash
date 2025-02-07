@@ -1,0 +1,8 @@
+package com.example.productservice.service;
+
+import java.math.BigDecimal;
+
+// Strategy interface
+public interface PriceStrategy {
+    BigDecimal calculatePrice(BigDecimal basePrice);
+}
