@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#define OUTPUT_FILE "/tmp/output.txt"
+
+int do_system(const char *cmd) {
+    return system(cmd);
+}
+
+int do_exec(const char *cmd, char *const argv[]) {
+    pid_t pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        return -1;
+    }
+    if (pid == 0) {
+        execvp(cmd, argv);
+        perror("execvp");
+        exit(EXIT_FAILURE);
+    }
+    int status;
+    waitpid(pid, &status, 0);
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
+
+int main() {
+    printf("Executing system call...\n");
+    do_system("echo 'Hello from system()' > " OUTPUT_FILE);
+
+    printf("Executing exec call...\n");
+    char *args[] = {"echo", "Hello from exec()", NULL};
+    do_exec("echo", args);
+
+    return 0;
+}
